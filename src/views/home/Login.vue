@@ -19,7 +19,7 @@
                             <i class="el-icon-user"></i>
                         </el-col>
                         <el-col :span='22'>
-                            <el-input class="inps" placeholder='用户名' v-model="loginForm.userName"></el-input>
+                            <el-input class="inps" placeholder='用户名，手机号,' v-model="loginForm.phone"></el-input>
                         </el-col>
                     </el-row>
                 </el-form-item>
@@ -28,13 +28,10 @@
                         <el-col :span='2'>
                             <i class="el-icon-lock"></i>
                         </el-col>
-                        <el-col :span='22'>
-                            <el-input
-                                    class="inps"
-                                    placeholder='密码'
-                                    v-model="loginForm.passWord"
-                            ></el-input>
+                        <el-col :span='22' class="yzm">
+                            <el-input class="inps" placeholder='验证码' v-model="loginForm.yzm"></el-input>
                         </el-col>
+                            <el-button class="yzmBtn" @click="getyzm" type="primary">获取验证码</el-button>
                     </el-row>
                 </el-form-item>
                 <el-form-item style="margin-top:55px;" class="submit">
@@ -45,10 +42,16 @@
     </div>
 </template>
 
+
 <script>
+    import {login} from "network/crud/login";
+    import {sendSms} from "network/crud/sendSms";
+
     export default {
+        name: "Login",
         data() {
             return {
+                isPhone: false,
                 canvas: null,
                 context: null,
                 stars: [], //星星数组
@@ -98,20 +101,52 @@
                 width: window.innerWidth,
                 height: window.innerHeight,
                 loginForm: {
-                    userName: "",
-                    passWord: ""
+                    phone: "",
+                    yzm: ""
                 },
                 loginRules: {
-                    userName: [
+                    phone: [
                         { required: true, message: "请输入用户名", trigger: "blur" }
                     ],
-                    passWord: [{ required: true, message: "请输入密码", trigger: "blur" }]
+                    yzm: [{ required: true, message: "请输入密码", trigger: "blur" }]
                 }
             };
         },
         methods: {
+            //获取验证码
+            getyzm(){
+                sendSms(this.loginForm.phone).then(res=> {
+                    this.result = res.data;
+                    //判断数据
+                    if (this.result == "0") {
+                        console.log("wu用户")
+                    } else if(this.result == "2"){
+                        this.isPhone = true;
+                        console.log("短信发送成功")
+                    } else {
+                        console.log("短信发送失败")
+                    }
+                })
+            },
+
             //提交登录
-            submitForm() {},
+            submitForm() {
+                login(this.loginForm.phone,this.loginForm.yzm).then(res=> {
+                    this.result = res.data;
+                    //判断数据
+                    if(this.isPhone){
+                        if (this.result == "0") {
+                            console.log("无用户用户");
+                        } else if(this.result == "1"){
+                            console.log("验证码错误");
+                        }else {
+                            this.$store.commit('SET_token',this.result);
+                            console.log("成功");
+                        }
+                    }
+                })
+            },
+
             //重复动画
             drawFrame() {
                 let animation = requestAnimationFrame(this.drawFrame);
@@ -225,6 +260,16 @@
         height: 100vh;
         width: 100vw;
         overflow: hidden;
+    }
+    .yzm{
+        width: 55%;
+    }
+    .yzmBtn{
+        background-color: transparent;
+        border: #3399ff 2px solid;
+        width: 100px;
+        margin-left: 3%;
+        font-size: 10px;
     }
     .title{
         font-size: 30px;
