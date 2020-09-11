@@ -2,17 +2,21 @@ import Vue from 'vue'
 import VueRouter from 'vue-router'
 
 const Home =()=>import("views/home/Login");
-
+const Index =()=>import("views/main/Index")
 Vue.use(VueRouter)
 
   const routes = [
     {
       path:'/',
-      redirect:'/home'
+      redirect:'/index'
     },
     {
       path: '/home',
       component: Home,
+    },
+    {
+      path: '/index',
+      component: Index,
     },
 ]
 

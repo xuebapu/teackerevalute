@@ -1,43 +1,45 @@
 <template>
-    <div id="login">
-        <div id="bgd">
-            <canvas id='myCanvas' :width='width' :height='height'>
-            </canvas>
-        </div>
-        <div class="title">
-            <h1>高级评教</h1>
-        </div>
-        <div class="tell">
-            <div>简介</div>
-        </div>
-        <div id="loginBox">
-            <h4>登录</h4>
-            <el-form :model="loginForm" :rules="loginRules" ref="loginForm" label-width="0px">
-                <el-form-item label="" prop="userName" style="margin-top:40px;">
-                    <el-row>
-                        <el-col :span='2'>
-                            <i class="el-icon-user"></i>
-                        </el-col>
-                        <el-col :span='22'>
-                            <el-input class="inps" placeholder='用户名，手机号,' v-model="loginForm.phone"></el-input>
-                        </el-col>
-                    </el-row>
-                </el-form-item>
-                <el-form-item label="" prop="passWord">
-                    <el-row>
-                        <el-col :span='2'>
-                            <i class="el-icon-lock"></i>
-                        </el-col>
-                        <el-col :span='22' class="yzm">
-                            <el-input class="inps" placeholder='验证码' v-model="loginForm.yzm"></el-input>
-                        </el-col>
-                            <el-button class="yzmBtn" @click="getyzm" type="primary">获取验证码</el-button>
-                    </el-row>
-                </el-form-item>
-                <el-form-item style="margin-top:55px;" class="submit">
-                    <el-button type="primary" round class="submitBtn" @click="submitForm">登录</el-button>
-                </el-form-item>
-            </el-form>
+    <div class="box">
+        <div id="login">
+            <div id="bgd">
+                <canvas id='myCanvas' :width='width' :height='height'>
+                </canvas>
+            </div>
+            <div class="title">
+                <h1>高级评教</h1>
+            </div>
+            <div class="tell">
+                <div>简介</div>
+            </div>
+            <div id="loginBox">
+                <h4>登录</h4>
+                <el-form :model="loginForm" :rules="loginRules" ref="loginForm" label-width="0px">
+                    <el-form-item label="" prop="phone" style="margin-top:40px;">
+                        <el-row>
+                            <el-col :span='2'>
+                                <i class="el-icon-user"></i>
+                            </el-col>
+                            <el-col :span='22'>
+                                <el-input class="inps" placeholder='用户名，手机号,' v-model="loginForm.phone"></el-input>
+                            </el-col>
+                        </el-row>
+                    </el-form-item>
+                    <el-form-item label="" prop="yzm">
+                        <el-row>
+                            <el-col :span='2'>
+                                <i class="el-icon-lock"></i>
+                            </el-col>
+                            <el-col :span='22' class="yzm">
+                                <el-input class="inps" placeholder='验证码' v-model="loginForm.yzm"></el-input>
+                            </el-col>
+                                <el-button :class="[yzmBtnK]" @click="getyzm" type="primary" :disabled="isDisable">获取验证码<span v-show="isshow" >({{djs}})</span></el-button>
+                        </el-row>
+                    </el-form-item>
+                    <el-form-item style="margin-top:55px;" class="submit">
+                        <el-button type="primary" round class="submitBtn" @click="submitForm">登录</el-button>
+                    </el-form-item>
+                </el-form>
+            </div>
         </div>
     </div>
 </template>
@@ -51,7 +53,15 @@
         name: "Login",
         data() {
             return {
+                //是否显示倒计时
+                isshow:false,
+                //是否发送成功
                 isPhone: false,
+                yzmBtnK:"yzmBtn",
+                //是否可点击
+                isDisable:false,
+                djs: 60,
+
                 canvas: null,
                 context: null,
                 stars: [], //星星数组
@@ -106,9 +116,9 @@
                 },
                 loginRules: {
                     phone: [
-                        { required: true, message: "请输入用户名", trigger: "blur" }
+                        { required: true, message: "请输入手机号", trigger: "blur" }
                     ],
-                    yzm: [{ required: true, message: "请输入密码", trigger: "blur" }]
+                    yzm: [{ required: true, message: "请输入验证码", trigger: "blur" }]
                 }
             };
         },
@@ -121,8 +131,21 @@
                     if (this.result == "0") {
                         console.log("wu用户")
                     } else if(this.result == "2"){
-                        this.isPhone = true;
                         console.log("短信发送成功")
+                        this.isPhone = true;
+                        this.isshow = true;
+                        this.isDisable=true;
+                        this.yzmBtnK = "yzmBtn_no";
+                        //倒计时djsf
+                        this.djsF = setInterval(()=>{
+                            this.djs --;
+                            if(this.djs === 0){
+                                clearInterval(this.djsF);
+                                this.isshow=false;
+                                this.yzmBtnK = "yzmBtn";
+                                this.isDisable=false;
+                            }
+                        },1000)
                     } else {
                         console.log("短信发送失败")
                     }
@@ -142,6 +165,7 @@
                         }else {
                             this.$store.commit('SET_token',this.result);
                             console.log("成功");
+                            this.$router.push('/index');
                         }
                     }
                 })
@@ -241,10 +265,10 @@
 </script>
 
 <style scoped>
+/* position: fixed;脱离文本流 */
+    .box{height: 100vh;position: fixed; top: 0; left: 0;z-index: 1;}
     #login {
         width: 100vw;
-        padding: 0;
-        margin: 0;
         height: 100vh;
         font-size: 16px;
         background-repeat: no-repeat;
@@ -257,9 +281,9 @@
         position: relative;
     }
     #bgd {
-        height: 100vh;
-        width: 100vw;
-        overflow: hidden;
+        height: 100%;
+        width: 100%;
+        overflow: hidden;;
     }
     .yzm{
         width: 55%;
@@ -267,6 +291,13 @@
     .yzmBtn{
         background-color: transparent;
         border: #3399ff 2px solid;
+        width: 100px;
+        margin-left: 3%;
+        font-size: 10px;
+    }
+    .yzmBtn_no{
+        background-color: #A1A3A7;
+        border: rgba(5, 5, 7, 0.09) 2px solid;
         width: 100px;
         margin-left: 3%;
         font-size: 10px;
